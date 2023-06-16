@@ -2,78 +2,37 @@ import numpy as np
 import cv2
 import matplotlib.pylab as plt
 
-CAMERA_ID = 0
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
-x1 = -1
-y1 = -1
-x2 = -1
-y2 = -1
-click1 = False
-click2 = False
+cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 270)
 
-def nothing():
-    pass
-
-def mouseCallBack(event, x, y, flags, param):
-    global x1, y1, x2, y2, click1, click2, frame
-    if event is cv2.EVENT_LBUTTONDOWN:
-        x1, y1 = x, y
-        click1 = True
-    elif event is cv2.EVENT_MOUSEMOVE:
-        if click1:
-            cv2.rectangle(frame, (x1, y1), (x, y), (0,0,255), 2)
-    elif event is cv2.EVENT_LBUTTONUP:
-        if click1:
-            x2, y2 = x, y
-            cv2.rectangle(frame, (x1,y1), (x2,y2), (0,0,255), 2)
-            click2 = True
-            print("click")
-
-cam = cv2.VideoCapture(CAMERA_ID)
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
-if cam.isOpened() == False:
-    print("cannot open Cam-%d" % (CAMERA_ID))
-    exit()
-
-window = "CAM window"
-
-cv2.namedWindow(window)
-cv2.setMouseCallback(window, mouseCallBack)
-
-# cv2.imshow(window, frame)
-ret, frame = cam.read()
-template = frame.copy()
-
-while not click2:
-    cv2.imshow(window, frame)
-
-    if(cv2.waitKey(10) > 0): 
-        cam.release()
-        exit()
-
-w = x2 - x1
-h = y2 - y1
-template2 = template[y1:y2, x1:x2]
-
-cv2.namedWindow("template")
-cv2.imshow("template", template2)
-
-method = cv2.TM_CCORR_NORMED
-
-while True:
+while cam.isOpened():
     status, frame = cam.read()
-
-    res = cv2.matchTemplate(frame, template2, method)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-
-    top_left = max_loc
-    bottom_right = max_loc[0]+w, max_loc[1]+h
-
-    cv2.rectangle(frame, top_left, bottom_right, (0,0,255), 2)
+    rows, cols = frame.shape[:2]
+    frameGray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
 
     if status:
-        cv2.imshow(window, frame)
-    if(cv2.waitKey(10) > 0): 
-        cam.release()
-        exit()
+        faces = face_cascade.detectMultiScale(frameGray, 1.2, 3)
+
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x,y), (x+w, y+h), (255,0,0), 2)
+            flag = False
+            for(x, y, w, h) in faces:
+                center = [int(x+w/2), int(y+h/2)]
+                M = np.float64([[1, 0, -center[0]+int(cols/2)], [0, 1, -center[1]+int(rows/2)]])
+                dst = cv2.warpAffine(frame, M, (cols, rows))
+                flag = True
+                break
+
+            if flag:
+                cv2.imshow("test", dst)
+            else:
+                cv2.imshow("test", frame)
+        
+    if cv2.waitKey(200) & 0xFF == ord('q'):
+        break
+
+cam.release()
+cv2.destroyAllWindows()
