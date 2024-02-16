@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
-img1 = cv2.imread("images/img16.jpg", cv2.IMREAD_GRAYSCALE)
+img1 = cv2.imread("images/img_car_2.jpg", cv2.IMREAD_GRAYSCALE)
 
 res = []
 img1_blur = cv2.GaussianBlur(img1, [3, 3], 0)

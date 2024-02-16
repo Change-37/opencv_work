@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
 
-img = cv.imread('images/img14.jpg', cv.IMREAD_GRAYSCALE)
+img = cv.imread('images/img_car_3.jpg', cv.IMREAD_GRAYSCALE)
 assert img is not None, "file couldn't be read"
 
 # img = cv.medianBlur(img, 5)
